@@ -7,7 +7,7 @@ class Channel:
     LENS = 1 
     ABBARATION = 2 
 
-    def __init__(self, type, len = 0, diam = 0, n = [], m = []): 
+    def __init__(self, type, len = 0, diam = 0, n = [], m = [], app = 0, stre = []): 
         """
         Constructor of Channel class. 
 
@@ -21,6 +21,10 @@ class Channel:
         @param n: Each integer corresponds to the n parameter of the corresponding Zernike polynomial (Only save to class if type == ABBARATION)
         @type m: Array of integers (Same length as n)
         @param m: Each integer corresponds to the n parameter of the corresponding Zernike polynomial (Only save to class if type == ABBARATION)
+        @type app: Number 
+        @param app: Apperture of the abberation 
+        @type stre: Array of numbers (values must be between 0 and 1) 
+        @param stre: Stength of the abberation of corresponding indices 
         """
         self.type = type 
 
@@ -31,12 +35,17 @@ class Channel:
             self.diam = diam 
 
         elif self.type == ABBARATION: # Set Zernike polynomial types for the abbaration 
-            if len(n) == len(m): 
+            if (len(n) == len(m)) and (len(stre) == len(m)): 
                 self.n = n 
                 self.m = m 
-            else:  # Arrays of Zernike indices must be the same
+                self.app = app 
+                if all(stre > 0) and all(stre < 1):
+                    self.stre = stre 
+                else: # Ensure that the strengths of all the abberations are between 0 and 1
+                    raise Exception("Strength of all abberations must be between 0 and 1. ")
+            else:  # Arrays of Zernike indices and strength array must all be the same length 
                 raise Exception("Indices vectors of Zernike polynomials must be the same length (len(n) != len(m)).")
-            
+
         else:  
             raise Exception("Class type is not defined; type must be an integer corresponding to one of the possible channels. ")
 
@@ -55,7 +64,7 @@ class Channel:
         @param LX: Length of x direction of beam (m) 
         @type LY: Number 
         @param LY: Length of y direction of beam (m) 
-
+        
         @rtype: 2x2 array 
         @return: Beam front of beam leaving the channel 
         """
@@ -76,7 +85,9 @@ class Channel:
             output = -1 
 
         elif self.type == ABBARATION: # Case of abbaration channel 
-            output = -1
+            output = beam 
+            for i in range(len(self.n)): # Apply all abbarations corresponding to m, n, and stre arrays 
+                output = self.__ApplyAbberation(output, LX, LY, self.m[i], self.n[i], self.stre[i])
 
         # Return output beam 
         return output 
@@ -176,10 +187,10 @@ class Channel:
         Computes values of Zernike polynomial of indices m and n at the positions corresponding to the ranges 
         RHO and PHI in polar coordinates. 
 
-        @rtype RHO: 1D Array 
-        @return RHO: Coordinate distances in rho direction (distance from center)
-        @rtype PHI: 1D Array 
-        @return PHI: Coordinate angles in phi direction (angle from positive x axis)
+        @type RHO: 1D Array 
+        @param RHO: Coordinate distances in rho direction (distance from center)
+        @type PHI: 1D Array 
+        @param PHI: Coordinate angles in phi direction (angle from positive x axis)
         @type m: Integer 
         @param m: Index m of Zernike polynomial 
         @type n: Integer 
@@ -203,6 +214,45 @@ class Channel:
         P = Z
         return(P)
     
+    def __ApplyAbberation(self, beam, LX, LY, m, n, stre):
+        """
+        This function applies an abbaration represented by a Zernike polynomial of indices m and n 
+        onto the beam coming into the channel. 
+
+        @type beam: 2D Array of numbers 
+        @param beam: Represents wavefront of incoming beam 
+        @type LX: Number 
+        @param LX: Length of beam in X direction 
+        @type LY: Number 
+        @param LY: Length of beam in Y direction 
+        @type m: Integer 
+        @param m: Index m of Zernike polynomial 
+        @type n: Integer 
+        @param n: Index n of Zernike polynomial  
+        @type stre: Number (value must be between 0 and 1) 
+        @param stre: Stength of the abberation 
+
+        @rtype output_beam: 2D Array of numbers 
+        @return output_beam: Represents wavefront of beam leaving the abberation channel 
+        """
+
+        # Space definition 
+        X=np.linspace(-LX/2, LX/2, beam.size[0]);
+        Y=np.linspace(-LY/2, LY/2, beam.size[1]);
+    
+        # Create corresponding polar coordinate matrices 
+        xx,yy=np.meshgrid(X,Y)
+        r, phi= __cart2pol(xx,yy)
+
+        # Zernike Polynomial 
+        P=__Zernike(r/self.app,np.transpose(phi),m,n)
+
+        # Applying the Aberration
+        output_beam = np.exp(1j*np.pi*stre*P) * beam 
+
+        # Return output beam 
+        return output_beam
+
     def __ApertureFilter(R, X, Y): pass 
 
 
