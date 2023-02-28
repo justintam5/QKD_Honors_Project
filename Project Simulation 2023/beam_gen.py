@@ -40,32 +40,33 @@ class BeamGen:
 
 ###---------------------------------USE CASE EXAMPLE--------------------------------------
 
-PI = np.pi
-x = np.linspace(-5,5,200); ## Grid points along x
-y = np.linspace(-5,5,200) ## Grid points along y
-X,Y = np.meshgrid(x,y)
-r = np.sqrt(X**2+Y**2)
-phi = np.mod(np.arctan2(Y,X),2*PI)
+if __name__ == "__main__":
 
-wavelength = 810E-6
-beamWaist = 1.0
-wavevector = (2.0*PI)/wavelength
+    PI = np.pi
+    x = np.linspace(-5,5,200); ## Grid points along x
+    y = np.linspace(-5,5,200) ## Grid points along y
+    X,Y = np.meshgrid(x,y)
+    r = np.sqrt(X**2+Y**2)
+    phi = np.mod(np.arctan2(Y,X),2*PI)
 
-lg_beam = BeamGen("LG",2,0,beamWaist,r,phi,0.000001,wavevector)
+    wavelength = 810E-6
+    beamWaist = 1.0
+    wavevector = (2.0*PI)/wavelength
 
-
-figInit = plt.figure()
-ax1 = figInit.add_subplot(1,1,1)
-plot1 = ax1.pcolormesh(X,Y,lg_beam.intensity(),cmap="inferno")
-ax1.set_aspect('equal')
-ax1.autoscale(tight=True)
-
-figPhase = plt.figure()
-ax2 = figPhase.add_subplot(1,1,1)
-plot2 = ax2.pcolormesh(X,Y,lg_beam.phase(),cmap="hsv",vmin=0,vmax=2*PI)
-ax2.set_aspect('equal')
-ax2.autoscale(tight=True)
+    lg_beam = BeamGen("LG",2,0,beamWaist,r,phi,0.000001,wavevector)
 
 
-plt.show()
+    figInit = plt.figure()
+    ax1 = figInit.add_subplot(1,1,1)
+    plot1 = ax1.pcolormesh(X,Y,lg_beam.intensity(),cmap="inferno")
+    ax1.set_aspect('equal')
+    ax1.autoscale(tight=True)
 
+    figPhase = plt.figure()
+    ax2 = figPhase.add_subplot(1,1,1)
+    plot2 = ax2.pcolormesh(X,Y,lg_beam.phase(),cmap="hsv",vmin=0,vmax=2*PI)
+    ax2.set_aspect('equal')
+    ax2.autoscale(tight=True)
+
+
+    plt.show()
