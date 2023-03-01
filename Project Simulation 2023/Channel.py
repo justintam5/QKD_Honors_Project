@@ -7,7 +7,7 @@ class Channel:
     LENS = 1 
     ABBARATION = 2 
 
-    def __init__(self, type, len = 0, diam = 0, n = [], m = [], app = 0, stre = []): 
+    def __init__(self, type, dist = 0, diam = 0, n = [], m = [], app = 0, stre = []): 
         """
         Constructor of Channel class. 
 
@@ -22,19 +22,20 @@ class Channel:
         @type m: Array of integers (Same length as n)
         @param m: Each integer corresponds to the n parameter of the corresponding Zernike polynomial (Only save to class if type == ABBARATION)
         @type app: Number 
-        @param app: Apperture of the abberation 
+        @param app: Apperture of the abberation (Only save to class if type == ABBARATION)
         @type stre: Array of numbers (values must be between 0 and 1) 
-        @param stre: Stength of the abberation of corresponding indices 
+        @param stre: Stength of the abberation of corresponding indices (Only save to class if type == ABBARATION)
         """
+
         self.type = type 
 
-        if self.type == FREE_SPACE: # Set distance of propagation if channnel is LOS free space 
-            self.len = len 
+        if self.type == Channel.FREE_SPACE: # Set distance of propagation if channnel is LOS free space 
+            self.dist = dist 
 
-        elif self.type == LENS: # Set diameter of channel type is lens 
+        elif self.type == Channel.LENS: # Set diameter of channel type is lens 
             self.diam = diam 
 
-        elif self.type == ABBARATION: # Set Zernike polynomial types for the abbaration 
+        elif self.type == Channel.ABBARATION: # Set Zernike polynomial types for the abbaration 
             if (len(n) == len(m)) and (len(stre) == len(m)): 
                 self.n = n 
                 self.m = m 
@@ -78,13 +79,13 @@ class Channel:
 
         # Get beam output based on channel type and parameters 
 
-        if self.type == FREE_SPACE: # Case of free space channel 
+        if self.type == Channel.FREE_SPACE: # Case of free space channel 
             output = __propTF(beam,L,k,self.dist) 
 
-        elif self.type == LENS: # Case of lens channel 
+        elif self.type == Channel.LENS: # Case of lens channel 
             output = -1 
 
-        elif self.type == ABBARATION: # Case of abbaration channel 
+        elif self.type == Channel.ABBARATION: # Case of abbaration channel 
             output = beam 
             for i in range(len(self.n)): # Apply all abbarations corresponding to m, n, and stre arrays 
                 output = self.__ApplyAbberation(output, LX, LY, self.m[i], self.n[i], self.stre[i])
@@ -192,15 +193,20 @@ class Channel:
         @type PHI: 1D Array 
         @param PHI: Coordinate angles in phi direction (angle from positive x axis)
         @type m: Integer 
-        @param m: Index m of Zernike polynomial 
+        @param m: Index m of Zernike polynomial (n >= m >= 0)
         @type n: Integer 
-        @param n: Index n of Zernike polynomial 
+        @param n: Index n of Zernike polynomial (n >= m >= 0)
 
         @rtype P: 2D Array 
         @return P: Zernike polynomial in polar coordinates 
         """
+
+        # Ensure indices are reasonable 
+        if (n < 0) or (m < 0) or (n < m): 
+            raise Exception("Incorrect indices for Zernike polynomials: Must have n >= m >= 0")
+
         ZR=np.zeros(RHO.shape); 
-        rn=RR(np.abs(m),n)
+        rn=__RR(np.abs(m),n)
         for ii in range(len(rn[0])):
             ZR=ZR+rn[0][ii]*RHO**rn[1][ii]
 
