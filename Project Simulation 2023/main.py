@@ -41,20 +41,19 @@ wavevector = (2.0*np.pi)/wavelength
 lg_beam = BeamGen("LG",4,2,beamWaist,r,phi,0.000001,wavevector)
 
 figInit = plt.figure()
-ax1 = figInit.add_subplot(1,1,1)
+ax1 = figInit.add_subplot(2,2,1)
 plot1 = ax1.pcolormesh(X,Y,lg_beam.intensity(),cmap="inferno")
 ax1.set_aspect('equal')
 ax1.autoscale(tight=True)
 
-figPhase = plt.figure()
-ax2 = figPhase.add_subplot(1,1,1)
+ax2 = figInit.add_subplot(2, 2, 2)
 plot2 = ax2.pcolormesh(X,Y,lg_beam.phase(),cmap="hsv",vmin=0,vmax=2*np.pi)
 ax2.set_aspect('equal')
 ax2.autoscale(tight=True)
 
-ch1 = Channel(type = Channel.ABBARATION, n = [3, 1], m = [1, 1], stre = np.array([0.3, 0.5]), app = 5)
+ch1 = Channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.8, 0.9, 0.7]), app = 5)
 ch2 = Channel(type = Channel.FREE_SPACE, dist = 100000)
-ch3 = Channel(type = Channel.LENS, diam = 3)
+ch3 = Channel(type = Channel.LENS, diam = 10)
 ch4 = Channel(type = Channel.FREE_SPACE, dist = 100000)
 
 #beamGen = BeamGen("LG", 1, 3, 2, 3, 0.5, 5, 0.144)
@@ -64,14 +63,13 @@ beam_out_2 = ch2.output_beam(beam_out_1, wavevector, L=L)
 beam_out_3 = ch3.output_beam(beam_out_2, wavevector, L=L)
 beam_out_4 = ch4.output_beam(beam_out_3, wavevector, L=L)
 
-figInit = plt.figure()
-ax1 = figInit.add_subplot(1, 1, 1)
+#figInit = plt.figure()
+ax1 = figInit.add_subplot(2, 2, 3)
 plot1 = ax1.pcolormesh(X, Y, np.abs(beam_out_3)**2, cmap="inferno")
 ax1.set_aspect('equal')
 ax1.autoscale(tight=True)
 
-figPhase = plt.figure()
-ax2 = figPhase.add_subplot(1, 1, 1)
+ax2 = figInit.add_subplot(2, 2, 4)
 plot2 = ax2.pcolormesh(X, Y, np.mod(np.angle(beam_out_3),2*np.pi),
                        cmap="hsv", vmin=0, vmax=2*np.pi)
 ax2.set_aspect('equal')
