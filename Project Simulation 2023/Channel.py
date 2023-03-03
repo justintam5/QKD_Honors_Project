@@ -80,7 +80,7 @@ class Channel:
         # Get beam output based on channel type and parameters 
 
         if self.type == Channel.FREE_SPACE: # Case of free space channel 
-            output = __propTF(beam,L,k,self.dist) 
+            output = Channel.__propTF(beam, LX, LY, k, self.dist)
 
         elif self.type == Channel.LENS: # Case of lens channel 
             output = -1 
@@ -206,7 +206,7 @@ class Channel:
             raise Exception("Incorrect indices for Zernike polynomials: Must have n >= m >= 0")
 
         ZR=np.zeros(RHO.shape); 
-        rn=__RR(np.abs(m),n)
+        rn = Channel.__RR(np.abs(m), n)
         for ii in range(len(rn[0])):
             ZR=ZR+rn[0][ii]*RHO**rn[1][ii]
 
@@ -243,15 +243,15 @@ class Channel:
         """
 
         # Space definition 
-        X=np.linspace(-LX/2, LX/2, beam.size[0]);
-        Y=np.linspace(-LY/2, LY/2, beam.size[1]);
+        X=np.linspace(-LX/2, LX/2, beam.shape[0]);
+        Y=np.linspace(-LY/2, LY/2, beam.shape[1]);
     
         # Create corresponding polar coordinate matrices 
         xx,yy=np.meshgrid(X,Y)
-        r, phi= __cart2pol(xx,yy)
+        r, phi= Channel.__cart2pol(xx,yy)
 
         # Zernike Polynomial 
-        P=__Zernike(r/self.app,np.transpose(phi),m,n)
+        P = Channel.__Zernike(r/self.app, np.transpose(phi), m, n)
 
         # Applying the Aberration
         output_beam = np.exp(1j*np.pi*stre*P) * beam 

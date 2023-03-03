@@ -36,7 +36,7 @@ class BeamGen:
         return (np.abs(self.beam))**2
 
     def phase(self):
-        return (np.mod(np.angle(self.beam),2*PI))
+        return (np.mod(np.angle(self.beam),2*np.pi))
 
 ###---------------------------------USE CASE EXAMPLE--------------------------------------
 
