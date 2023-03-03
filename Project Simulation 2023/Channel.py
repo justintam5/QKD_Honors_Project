@@ -260,6 +260,23 @@ class Channel:
         return output_beam
 
     def __ApertureFilter(R, beam, LX, LY):
+        """
+        This function applies an aperture filter of radius R on the given bbeam provided by the 2D array 
+        beam with lengths LX and LY in the x and y directions. 
+
+        @type R: Number 
+        @param R: Radius of aperture filter
+        @type beam: 2D array of numbers 
+        @param beam: Values of beam on the x-y plane 
+        @type LX: Number 
+        @type LX: Number 
+        @param LX: Length of beam in X direction 
+        @type LY: Number 
+        @param LY: Length of beam in Y direction 
+
+        @rtype beamOut: 2D array of numbers 
+        @return beamOut: Represents wavefront of beam leaving the aperture filter channel 
+        """
         # Space definition 
         X=np.linspace(-LX/2, LX/2, beam.shape[0])
         Y=np.linspace(-LY/2, LY/2, beam.shape[1])
