@@ -83,7 +83,7 @@ class Channel:
             output = Channel.__propTF(beam, LX, LY, k, self.dist)
 
         elif self.type == Channel.LENS: # Case of lens channel 
-            output = -1 
+            output = Channel.__ApertureFilter(self.diam, beam, LX, LY)
 
         elif self.type == Channel.ABBARATION: # Case of abbaration channel 
             output = beam 
@@ -243,8 +243,8 @@ class Channel:
         """
 
         # Space definition 
-        X=np.linspace(-LX/2, LX/2, beam.shape[0]);
-        Y=np.linspace(-LY/2, LY/2, beam.shape[1]);
+        X=np.linspace(-LX/2, LX/2, beam.shape[0])
+        Y=np.linspace(-LY/2, LY/2, beam.shape[1])
     
         # Create corresponding polar coordinate matrices 
         xx,yy=np.meshgrid(X,Y)
@@ -259,6 +259,22 @@ class Channel:
         # Return output beam 
         return output_beam
 
-    def __ApertureFilter(R, X, Y): pass 
+    def __ApertureFilter(R, beam, LX, LY):
+        # Space definition 
+        X=np.linspace(-LX/2, LX/2, beam.shape[0])
+        Y=np.linspace(-LY/2, LY/2, beam.shape[1])
+
+        # Create corresponding polar coordinate matrices 
+        xx,yy=np.meshgrid(X,Y)
+        r, phi= Channel.__cart2pol(xx,yy)
+
+        # Get Apperture Filter
+        Ap = (r < R)
+
+        # Apply Apperture Filter 
+        beamOut = beam * Ap
+
+        # Return output beam
+        return beamOut
 
 
