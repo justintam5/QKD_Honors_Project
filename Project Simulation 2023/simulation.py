@@ -97,7 +97,7 @@ class Simulation:
 
         # If index was entered, ensure that it is within a valid range
         elif index < self.num_beam_generators: 
-            self.channels.insert(index, BeamGen(mode, ell, p, w0, r, phi, z, k)) 
+            self.channels.insert(index, BeamGen(mode, ell, p, w0, r, phi, z, wavevector)) 
         
         # Throw exception if invalid index was entered 
         else: 
