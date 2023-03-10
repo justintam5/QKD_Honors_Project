@@ -72,7 +72,7 @@ class Simulation:
         if ((NX == -1) or (NY == -1)) and (N != -1): # One of NX or NY not specified but N specified 
             self.NX = N
             self.NY = N 
-        elif ((LX == -1) or (LY == -1)) and (L == -1): # One of NX or NY not specified but N not specified 
+        elif ((NX == -1) or (NY == -1)) and (N == -1): # One of NX or NY not specified but N not specified 
             raise Exception("Beam array length must be specified. ")
         else: 
             self.NX = NX 
@@ -410,14 +410,14 @@ class Simulation:
 
 # Use case example 
 if __name__ == "__main__": 
-    sim = Simulation(L = 10, N = 1000, wavelength = 810E-6)
+    sim = Simulation(L = 10, N = 1500, wavelength = 810E-6)
     sim.add_beam_gen(ell = 3, p = 4)
     sim.add_beam_gen(ell = 0, p = 0)
     sim.add_beam_gen(ell = 1, p = 3)
-    sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.8, 0.9, 0.7]), app = 5)
+    sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.1, 0.2, 0.2]), app = 5)
     sim.add_channel(type = Channel.FREE_SPACE, dist = 100000) 
     sim.add_channel(type = Channel.LENS, diam=3)
     sim.add_channel(type = Channel.FREE_SPACE, dist = 100000)
 
     sim.run()
-    sim.plot_beams(run_index=2, channel_indices=[0,-1])
+    sim.plot_beams(run_index=2, channel_indices=[0,2,-1])
