@@ -3,6 +3,7 @@ from beam_gen import BeamGen
 
 import numpy as np 
 import matplotlib.pyplot as plt
+from mlxtend.plotting import plot_confusion_matrix
 
 class Simulation: 
 
@@ -37,6 +38,7 @@ class Simulation:
         self.num_channels = 0 
         self.num_beam_generators = 0
         self.runs = []
+        self.beam_labels = []
         self.num_runs = 0
         self.units = units 
 
@@ -112,10 +114,14 @@ class Simulation:
         # If index was not entered, append new beam generator to end of the array
         if index == -1: 
             self.beam_generators.append(BeamGen(mode, ell, p, beam_waist * self.multiplier, r, phi, z, wavevector))
+            if mode == "LG":
+                self.beam_labels.append(("(p = " + str(p) + ", l = " + str(ell) + ")"))
 
         # If index was entered, ensure that it is within a valid range
         elif index < self.num_beam_generators: 
             self.channels.insert(index, BeamGen(mode, ell, p, beam_waist * self.multiplier, r, phi, z, wavevector)) 
+            if mode == "LG":
+                self.beam_labels.insert(index, ("(p = " + str(p) + ", l = " + str(ell) + ")"))
         
         # Throw exception if invalid index was entered 
         else: 
@@ -388,6 +394,52 @@ class Simulation:
         self.runs = [] 
         self.num_runs = 0
 
+    def compute_detection_matrix(self, channel_index, run_indices = []):  
+
+        # If no run indices defined, compute for all runs 
+        if run_indices == []: 
+            run_indices = range(self.num_runs)
+
+        # Define detection matrix
+        detection_matrix = np.zeros([len(run_indices), len(run_indices)])
+
+        # Populate detection matrix 
+        for row_idx in run_indices: # Sift through rows 
+            for col_idx in run_indices: # Sift through columns
+                # Use channel index of 0 for clumns to indicate computation with respect to initial beam 
+                detection_matrix[row_idx, col_idx] = Simulation.__normalized_inner_product(self.runs[row_idx][0],self.runs[col_idx][channel_index])
+
+        # Normalize rows in detection matrix 
+        normalized_detection_matrix = np.zeros([len(run_indices), len(run_indices)])
+
+        for row_idx in run_indices: # Sift through rows 
+            for col_idx in run_indices: # Sift through columns
+                normalized_detection_matrix[row_idx, col_idx] = detection_matrix[row_idx, col_idx] / (np.sum(detection_matrix[row_idx,:]))
+
+        # Return normalized detection matrix 
+        return normalized_detection_matrix
+    
+    def plot_detection_matrix(self, channel_index, run_indices = []): 
+
+        if run_indices == []: 
+            run_indices = range(self.num_runs)
+
+        # Get detection matrix 
+        detection_matrix = self.compute_detection_matrix(channel_index, run_indices)
+
+        # Define classes 
+        classes = [self.beam_labels[idx] for idx in run_indices] 
+
+        # Plot matrix
+        figure, ax = plot_confusion_matrix(conf_mat = detection_matrix,
+                                   class_names = classes,
+                                   show_absolute = False,
+                                   show_normed = True,
+                                   colorbar = True)
+
+        plt.show()
+
+
     def __cart2pol(x, y):
         """
         This function is used for converting cartesian coordinates to polar coordinates. 
@@ -407,17 +459,46 @@ class Simulation:
         rho = np.sqrt(x**2 + y**2)
         phi = np.arctan2(y, x)
         return(rho, phi)
+    
+    def __normalized_inner_product(beam1, beam2):
+
+        # Get beam product 
+        product = beam1 * np.conjugate(beam2)
+
+        # Integrate product using the sum function 
+        integral = np.sum(product) 
+
+        # Take inner product to be the square of the integral 
+        inner_product = np.abs(integral)**2 
+
+        # Get square magnitude of both beams 
+        product1 = np.abs(beam1)**2
+        product2 = np.abs(beam2)**2
+
+        # Integrate both products 
+        integral1 = np.sum(product1)
+        integral2 = np.sum(product2) 
+
+        # Get normalized inner product 
+        normalized_inner_product = inner_product / (integral1 * integral2) 
+
+        # Return normalized inner prduct 
+        return normalized_inner_product
+
 
 # Use case example 
 if __name__ == "__main__": 
     sim = Simulation(L = 10, N = 1500, wavelength = 810E-6)
-    sim.add_beam_gen(ell = 3, p = 4)
-    sim.add_beam_gen(ell = 0, p = 0)
-    sim.add_beam_gen(ell = 1, p = 3)
-    sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.1, 0.2, 0.2]), app = 5)
+    sim.add_beam_gen(ell = 0, p = 5)
+    sim.add_beam_gen(ell = 0, p = 3)
+    sim.add_beam_gen(ell = 0, p = 1)
+    sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.9, 0.9, 0.9]), app = 5)
     sim.add_channel(type = Channel.FREE_SPACE, dist = 100000) 
     sim.add_channel(type = Channel.LENS, diam=3)
     sim.add_channel(type = Channel.FREE_SPACE, dist = 100000)
 
+    channel_idx = 2
+
     sim.run()
-    sim.plot_beams(run_index=2, channel_indices=[0,2,-1])
+    sim.plot_detection_matrix(channel_idx)
+    sim.plot_beams(channel_index = channel_idx)
