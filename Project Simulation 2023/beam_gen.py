@@ -74,42 +74,86 @@ class BeamGen:
         Uses::      
         Used By::   __init__
         """
-        self.w0 = np.amax(self.r)
+        self.w0 = 1/3*np.amax(self.r)
         return 0
    
-    def __create_pixels(self):
+    def a__create_pixels(self):
         """
         Private Method:: Used to find the index of the nearest 
         Uses::      __find_nearest()
         Used By::   __create_pixels()
         """
-        i_phi = np.linspace(PI/6, 2*PI+PI/6, 7) # Each phi_i represents the angular position of each 'pixel' circle. Start at an angle of 30 Deg and rotate.
-        i_phi = i_phi[:-1]
-        i_r = 2/3*np.amax(self.r)
-        i_rphi = np.vstack((np.full(6, i_r), i_phi)).T # Returns a 6x2 matrix containing 6 pairs of r/phi coordinates representing the 6 outer pixel origins
-        i_rphi = np.append(i_rphi, [[0, 0]], axis=0) # Add the origin to the pixel coordinates. All 7 circle origins are now in this array
+        self.w0 = 1/3*np.amax(self.r)/np.sqrt(2)
+        phi_i = np.linspace(PI/6, 2*PI+PI/6, 7) # Each phi_i represents the angular position of each 'pixel' circle. Start at an angle of 30 Deg and rotate.
+        phi_i = phi_i[:-1]
+        r_i = 2*self.w0
+        rphi_i = np.vstack((np.full(6, r_i), phi_i)).T # Returns a 6x2 matrix containing 6 pairs of r/phi coordinates representing the 6 outer pixel origins
+        rphi_i = np.append(rphi_i, [[0, 0]], axis=0) # Add the origin to the pixel coordinates. All 7 circle origins are now in this array
 
         #draw circle around each:
-        return np.apply_along_axis(self.__draw_circle, 1, i_rphi)
-    
+        circle_i = np.apply_along_axis(self.for_each_pixel, 1, rphi_i) # For each pixel, call the for_each_pixel funciton
+        
 
-    def __draw_circle(self, x): #callback function :: used to draw a circle around each pixel origin
+        pixel_img = np.sum(circle_i, axis=0)
+        pixel_img[pixel_img >= 1.665082580534673] = 1.665082580534673
+
+        # print(circle_i)
+        [x, y] = self.__polar_2_cart([self.r, self.phi])
+        plt.figure(figsize=(7,7))
+        plt.pcolormesh(x, y, pixel_img, cmap='Blues')
+        plt.grid()
+        plt.xlim([-5, 5])
+        plt.ylim([-5, 5])
+        plt.show()
+        return 0
+
+    def for_each_pixel(self, pixel_center): #callback function :: used to draw a circle around each pixel origin
         """
         Private Method:: Used to find the index of the nearest 
         Uses::      __find_nearest()
         Used By::   __create_pixels()
         """
-        print(self.__find_nearest([5, 10])) 
-        return x
+        nearest_idx = self.__find_nearest(pixel_center) 
+
+        nearest_r = self.r[nearest_idx[0], nearest_idx[1]]
+        nearest_phi = self.phi[nearest_idx[0], nearest_idx[1]]
+
+        [nearest_x, nearest_y] = self.__polar_2_cart([nearest_r, nearest_phi])
+        [x, y] = self.__polar_2_cart([self.r, self.phi])
+        
+        shifted_cone = np.sqrt((x-nearest_x)**2 + (y-nearest_y)**2)
+      
+        # plt.pcolor(x, y, shifted_cone)
+        # plt.grid()
+        # plt.show()
+        
+        shifted_cone[shifted_cone >= self.w0] = 0
+
+        # plt.figure(figsize=(7,7))
+        # plt.pcolormesh(x, y, shifted_cone, cmap='binary')
+        # plt.grid()
+        # plt.xlim([-5, 5])
+        # plt.ylim([-5, 5])
+        # plt.show()
+
+        return shifted_cone
+    
+    def __gaussian(self):
+        """
+        Private Method::  
+        Uses::      
+        Used By::  
+        """
+        gaussian_beam = None
+        return gaussian_beam
     
     def __find_nearest(self, value):
         """
         Private Method:: Used to find the index of the nearest 
         Uses::      __dist_in_polar()
-        Used By::   __draw_circle()
+        Used By::   for_each_pixel()
         """
-        idx = np.unravel_index(np.argmin(self.__dist_in_polar(self.r, value[0], self.phi, value[1])), self.phi.shape)
-        return [self.r[idx], self.phi[idx], idx]
+        return np.unravel_index(np.argmin(self.__dist_in_polar(self.r, value[0], self.phi, value[1])), self.phi.shape)
     
     def __dist_in_polar(self, r2, r1, phi2, phi1):
         """
@@ -118,6 +162,13 @@ class BeamGen:
         Used By::   __find_nearest()
         """
         return np.sqrt(r1**2 + r2**2 - 2*r1*r2*np.cos(phi2 - phi1))
+
+    def __polar_2_cart(self, polar_cord):
+        r = polar_cord[0]
+        phi = polar_cord[1]
+        x = r * np.cos(phi)
+        y = r * np.sin(phi)
+        return [x, y]
 
 
 ###---------------------------------USE CASE EXAMPLE--------------------------------------
@@ -145,7 +196,7 @@ if __name__ == "__main__":
 
     lg_beam = BeamGen("LG",4,0,beamWaist,r,phi,0.000001,wavevector)
   
-    lg_beam.__draw_circle(2)
+    lg_beam.a__create_pixels()
 
 
     # figInit = plt.figure()
