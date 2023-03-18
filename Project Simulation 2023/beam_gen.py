@@ -17,6 +17,7 @@ class BeamGen:
         self.p = p
         self.w0 = w0
         self.r = r
+        self.R = np.amax(self.r)/np.sqrt(2)
         self.phi = phi
         self.z = z
         self.k = k
@@ -74,16 +75,16 @@ class BeamGen:
         Uses::      
         Used By::   __init__
         """
-        self.w0 = 1/3*np.amax(self.r)
+        self.__create_pixels()
         return 0
    
-    def a__create_pixels(self):
+    def __create_pixels(self):
         """
         Private Method:: Used to find the index of the nearest 
         Uses::      __find_nearest()
         Used By::   __create_pixels()
         """
-        self.w0 = 1/3*np.amax(self.r)/np.sqrt(2)
+
         phi_i = np.linspace(PI/6, 2*PI+PI/6, 7) # Each phi_i represents the angular position of each 'pixel' circle. Start at an angle of 30 Deg and rotate.
         phi_i = phi_i[:-1]
         r_i = 2*self.w0
@@ -91,11 +92,11 @@ class BeamGen:
         rphi_i = np.append(rphi_i, [[0, 0]], axis=0) # Add the origin to the pixel coordinates. All 7 circle origins are now in this array
 
         #draw circle around each:
-        circle_i = np.apply_along_axis(self.for_each_pixel, 1, rphi_i) # For each pixel, call the for_each_pixel funciton
+        circle_i = np.apply_along_axis(self.__for_each_pixel, 1, rphi_i) # For each pixel, call the __for_each_pixel funciton
         
 
         pixel_img = np.sum(circle_i, axis=0)
-        pixel_img[pixel_img >= 1.665082580534673] = 1.665082580534673
+        pixel_img[pixel_img >= 1.665082580534673] = 1.665082580534673 #this value is the maximum value for a single 'cone end'. Prevents overlap when summing each pixel
 
         # print(circle_i)
         [x, y] = self.__polar_2_cart([self.r, self.phi])
@@ -107,7 +108,7 @@ class BeamGen:
         plt.show()
         return 0
 
-    def for_each_pixel(self, pixel_center): #callback function :: used to draw a circle around each pixel origin
+    def __for_each_pixel(self, pixel_center): #callback function :: used to draw a circle around each pixel origin
         """
         Private Method:: Used to find the index of the nearest 
         Uses::      __find_nearest()
@@ -151,7 +152,8 @@ class BeamGen:
         """
         Private Method:: Used to find the index of the nearest 
         Uses::      __dist_in_polar()
-        Used By::   for_each_pixel()
+        Used By::   __for_each_pixel()
+        Parameters:: value = [r, phi]
         """
         return np.unravel_index(np.argmin(self.__dist_in_polar(self.r, value[0], self.phi, value[1])), self.phi.shape)
     
@@ -196,7 +198,7 @@ if __name__ == "__main__":
 
     lg_beam = BeamGen("LG",4,0,beamWaist,r,phi,0.000001,wavevector)
   
-    lg_beam.a__create_pixels()
+    lg_beam.__create_pixels()
 
 
     # figInit = plt.figure()
