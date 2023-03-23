@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy import special as sp
 
 class BeamGen:
-    PI = np.pi
+    
     def __init__(self, mode, ell, p, w0, r, phi, z, k, E0 = 1):
         """
         Initialization Method:: Initializes both defined and callable attributes. Sets self.beam attribute uesd by intensity() and phase(). 
@@ -48,6 +48,7 @@ class BeamGen:
         Used By::       
         Ret Val::       phase of self.beam as an numpy array of dytype float64
         """
+        PI = np.pi
         return (np.mod(np.angle(self.beam),2*PI))
     
     def __create_lg_mode(self):
@@ -56,6 +57,7 @@ class BeamGen:
         Uses:: 
         Used By::   __init__()
         """
+        PI = np.pi
         wavelength = (2*PI)/self.k
         zR = (PI*(self.w0**2))/(wavelength)
         
@@ -81,6 +83,7 @@ class BeamGen:
                         __draw_apperature_radius(), 
         Used By::       __init__
         """
+        PI = np.pi
         u1 = np.array(self.__polar_2_cart([2*self.w0, 0]))
         u2 = np.array(self.__polar_2_cart([2*self.w0, PI/3]))
         i = 100 #define the absolute limit of linear parameters to run through each circle
@@ -123,6 +126,7 @@ class BeamGen:
         Used By::       __create_pixel_mode()
         Ret Val::       An LxL gaussian beam centered at the given coordinate in a numpy array of dtype complex128
         """
+        PI = np.pi
         nearest_idx = self.__find_nearest(pixel_center) # Find the nearest grid point to the analytically determined pixel-center coordinate
         nearest_r = self.r[nearest_idx[0], nearest_idx[1]] # Find the r and phi values corresponding to the nearest index found above
         nearest_phi = self.phi[nearest_idx[0], nearest_idx[1]]
@@ -180,6 +184,7 @@ class BeamGen:
         Ret Val::       An LxL numpy array of dtype complex128 containing the Gaussian function.
 
         """
+        PI = np.pi
         wavelength = (2*PI)/self.k
         zR = (PI*(self.w0**2))/(wavelength)
         
@@ -236,6 +241,7 @@ class BeamGen:
         Used By::       __create_pixel_mode()
         Ret Val::       Nx2 numpy array of (r, phi) coordinates
         """
+        PI = np.pi
         x = cart_cord[:, 0]
         y = cart_cord[:, 1]
         r = np.sqrt((x)**2+(y)**2)
