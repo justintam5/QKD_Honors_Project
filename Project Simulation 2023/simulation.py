@@ -314,19 +314,26 @@ class Simulation:
 
                 # Plot magnitude of current beam 
                 ax_mag.append(figInit.add_subplot(self.num_runs, 2, plot_idx))
-                plot_mag.append(ax_mag[run_idx].pcolormesh(X, Y, np.abs(beam)**2, cmap="inferno"))
+                plot_mag.append(ax_mag[run_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.abs(beam)**2, cmap="inferno"))
                 ax_mag[run_idx].set_aspect('equal')
                 ax_mag[run_idx].autoscale(tight=True)
+
+                # Add labels to subplot 
+                ax_mag[run_idx].set(xlabel = ("x [" + self.units + "]"), ylabel = ("y [" + self.units + "]"))
+                ax_mag[run_idx].set_title(self.beam_labels[run_idx] + " (Magnitude)")
 
                 # Increment plot index 
                 plot_idx = plot_idx + 1
 
                 # Plot phase of current beam 
                 ax_phase.append(figInit.add_subplot(self.num_runs, 2, plot_idx))
-                plot_phase.append(ax_phase[run_idx].pcolormesh(X, Y, np.mod(np.angle(beam), 2*np.pi),
-                       cmap="hsv", vmin=0, vmax=2*np.pi))
+                plot_phase.append(ax_phase[run_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.mod(np.angle(beam), 2*np.pi),cmap="hsv", vmin=0, vmax=2*np.pi))
                 ax_phase[run_idx].set_aspect('equal')
                 ax_phase[run_idx].autoscale(tight=True)
+
+                # Add labels to subplot
+                ax_phase[run_idx].set(xlabel=("x [" + self.units + "]"), ylabel=("y [" + self.units + "]"))
+                ax_phase[run_idx].set_title(self.beam_labels[run_idx] + " (Phase)")
 
                 # Increment plot index
                 plot_idx = plot_idx + 1
@@ -346,19 +353,26 @@ class Simulation:
 
                 # Plot magnitude of current beam 
                 ax_mag.append(figInit.add_subplot(len(run_indices), 2, plot_idx))
-                plot_mag.append(ax_mag[run_idx].pcolormesh(X, Y, np.abs(beam)**2, cmap="inferno"))
+                plot_mag.append(ax_mag[run_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.abs(beam)**2, cmap="inferno"))
                 ax_mag[run_idx].set_aspect('equal')
                 ax_mag[run_idx].autoscale(tight=True)
+
+                # Add labels to subplot 
+                ax_mag[run_idx].set(xlabel = ("x [" + self.units + "]"), ylabel = ("y [" + self.units + "]"))
+                ax_mag[run_idx].set_title(self.beam_labels[run_idx] + " (Magnitude)")
 
                 # Increment plot index 
                 plot_idx = plot_idx + 1
 
                 # Plot phase of current beam 
                 ax_phase.append(figInit.add_subplot(len(run_indices), 2, plot_idx))
-                plot_phase.append(ax_phase[run_idx].pcolormesh(X, Y, np.mod(np.angle(beam), 2*np.pi),
-                       cmap="hsv", vmin=0, vmax=2*np.pi))
+                plot_phase.append(ax_phase[run_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.mod(np.angle(beam), 2*np.pi),cmap="hsv", vmin=0, vmax=2*np.pi))
                 ax_phase[run_idx].set_aspect('equal')
                 ax_phase[run_idx].autoscale(tight=True)
+
+                # Add labels to subplot
+                ax_phase[run_idx].set(xlabel=("x [" + self.units + "]"), ylabel=("y [" + self.units + "]"))
+                ax_phase[run_idx].set_title(self.beam_labels[run_idx] + " (Phase)")
 
                 # Increment plot index
                 plot_idx = plot_idx + 1
@@ -377,19 +391,26 @@ class Simulation:
 
                 # Plot magnitude of current beam 
                 ax_mag.append(figInit.add_subplot((self.num_channels + 1), 2, plot_idx))
-                plot_mag.append(ax_mag[channel_idx].pcolormesh(X, Y, np.abs(beam)**2, cmap="inferno"))
+                plot_mag.append(ax_mag[channel_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.abs(beam)**2, cmap="inferno"))
                 ax_mag[channel_idx].set_aspect('equal')
                 ax_mag[channel_idx].autoscale(tight=True)
+                
+                # Add labels to subplot 
+                ax_mag[channel_idx].set(xlabel = ("x [" + self.units + "]"), ylabel = ("y [" + self.units + "]"))
+                ax_mag[channel_idx].set_title("Channel " + str(channel_idx) + " (Magnitude)")
 
                 # Increment plot index 
                 plot_idx = plot_idx + 1
 
                 # Plot phase of current beam 
                 ax_phase.append(figInit.add_subplot((self.num_channels + 1), 2, plot_idx))
-                plot_phase.append(ax_phase[channel_idx].pcolormesh(X, Y, np.mod(np.angle(beam), 2*np.pi),
-                       cmap="hsv", vmin=0, vmax=2*np.pi))
+                plot_phase.append(ax_phase[channel_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.mod(np.angle(beam), 2*np.pi),cmap="hsv", vmin=0, vmax=2*np.pi))
                 ax_phase[channel_idx].set_aspect('equal')
                 ax_phase[channel_idx].autoscale(tight=True)
+
+                # Add labels to subplot
+                ax_phase[channel_idx].set(xlabel=("channel_idx [" + self.units + "]"), ylabel=("y [" + self.units + "]"))
+                ax_phase[channel_idx].set_title("Channel " + str(channel_idx) + " (Phase)")
 
                 # Increment plot index
                 plot_idx = plot_idx + 1
@@ -408,19 +429,26 @@ class Simulation:
 
                 # Plot magnitude of current beam 
                 ax_mag.append(figInit.add_subplot(len(channel_indices), 2, plot_idx))
-                plot_mag.append(ax_mag[channel_idx].pcolormesh(X, Y, np.abs(beam)**2, cmap="inferno"))
+                plot_mag.append(ax_mag[channel_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.abs(beam)**2, cmap="inferno"))
                 ax_mag[channel_idx].set_aspect('equal')
                 ax_mag[channel_idx].autoscale(tight=True)
+
+                # Add labels to subplot 
+                ax_mag[channel_idx].set(xlabel = ("x [" + self.units + "]"), ylabel = ("y [" + self.units + "]"))
+                ax_mag[channel_idx].set_title("Channel " + str(channel_indices[channel_idx]) + " (Magnitude)")
 
                 # Increment plot index 
                 plot_idx = plot_idx + 1
 
                 # Plot phase of current beam 
                 ax_phase.append(figInit.add_subplot(len(channel_indices), 2, plot_idx))
-                plot_phase.append(ax_phase[channel_idx].pcolormesh(X, Y, np.mod(np.angle(beam), 2*np.pi),
-                       cmap="hsv", vmin=0, vmax=2*np.pi))
+                plot_phase.append(ax_phase[channel_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.mod(np.angle(beam), 2*np.pi),cmap="hsv", vmin=0, vmax=2*np.pi))
                 ax_phase[channel_idx].set_aspect('equal')
                 ax_phase[channel_idx].autoscale(tight=True)
+
+                # Add labels to subplot
+                ax_phase[channel_idx].set(xlabel=("channel_idx [" + self.units + "]"), ylabel=("y [" + self.units + "]"))
+                ax_phase[channel_idx].set_title("Channel " + str(channel_indices[channel_idx]) + " (Phase)")
 
                 # Increment plot index
                 plot_idx = plot_idx + 1
@@ -438,18 +466,26 @@ class Simulation:
 
                 # Plot magnitude of current beam
                 ax_mag.append(figInit.add_subplot(len(self.measurement_basis), 2, plot_idx))
-                plot_mag.append(ax_mag[beam_idx].pcolormesh(X, Y, np.abs(beam)**2, cmap="inferno"))
+                plot_mag.append(ax_mag[beam_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.abs(beam)**2, cmap="inferno"))
                 ax_mag[beam_idx].set_aspect('equal')
                 ax_mag[beam_idx].autoscale(tight=True)
+
+                # Add labels to subplot 
+                ax_mag[beam_idx].set(xlabel = ("x [" + self.units + "]"), ylabel = ("y [" + self.units + "]"))
+                ax_mag[beam_idx].set_title(self.measurement_labels[beam_idx] + " (Magnitude)")
 
                 # Increment plot index
                 plot_idx = plot_idx + 1
 
                 # Plot phase of current beam
                 ax_phase.append(figInit.add_subplot(len(self.measurement_basis), 2, plot_idx))
-                plot_phase.append(ax_phase[beam_idx].pcolormesh(X, Y, np.mod(np.angle(beam), 2*np.pi),cmap="hsv", vmin=0, vmax=2*np.pi))
+                plot_phase.append(ax_phase[beam_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.mod(np.angle(beam), 2*np.pi),cmap="hsv", vmin=0, vmax=2*np.pi))
                 ax_phase[beam_idx].set_aspect('equal')
                 ax_phase[beam_idx].autoscale(tight=True)
+
+                # Add labels to subplot
+                ax_phase[beam_idx].set(xlabel=("x [" + self.units + "]"), ylabel=("y [" + self.units + "]"))
+                ax_phase[beam_idx].set_title(self.measurement_labels[beam_idx] + " (Phase)")
 
                 # Increment plot index
                 plot_idx = plot_idx + 1
@@ -659,41 +695,27 @@ class Simulation:
 # Use case example 
 if __name__ == "__main__": 
 
-    beamWaist = 2E-3 # Define beam waist of 2 mm 
+    beamWaist = 2 # Define beam waist of 2 mm 
 
-    sim = Simulation(L = 10 * beamWaist, N = 1000, wavelength = 810E-9)
+    sim = Simulation(L = 10 * beamWaist, N = 1000, wavelength = 810E-6, units = "mm")
     sim.add_beam_gen(ell = 0, p = 1, beam_waist = beamWaist)
-    #sim.add_beam_gen(ell = 0, p = 3, beam_waist = beamWaist)
-    #sim.add_beam_gen(ell = 0, p = 5, beam_waist = beamWaist)
+    sim.add_beam_gen(ell = 0, p = 3, beam_waist = beamWaist)
+    sim.add_beam_gen(ell = 0, p = 5, beam_waist = beamWaist)
 
-    #sim.add_measurement_basis(ell = 0, p = 1, beam_waist = 1.7*beamWaist)
-    #sim.add_measurement_basis(ell=0, p=3, beam_waist=1.7*beamWaist)
-    #sim.add_measurement_basis(ell=0, p=5, beam_waist=2*beamWaist)
+    sim.add_measurement_basis(ell = 0, p = 1, beam_waist = 1.7*beamWaist)
+    sim.add_measurement_basis(ell=0, p=3, beam_waist=1.7*beamWaist)
+    sim.add_measurement_basis(ell=0, p=5, beam_waist=2*beamWaist)
 
-    sim.add_channel(type=Channel.FREE_SPACE, dist=100)
-    #sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.9, 0.9, 0.9]), app = 3*beamWaist)
-    #sim.add_channel(type = Channel.FREE_SPACE, dist = 10) 
-    #sim.add_channel(type = Channel.LENS, diam = 2 * beamWaist)
-    #sim.add_channel(type = Channel.FREE_SPACE, dist = 5)
+    # sim.add_channel(type=Channel.FREE_SPACE, dist=100)
+    sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.9, 0.9, 0.9]), app = 3*beamWaist)
+    sim.add_channel(type = Channel.FREE_SPACE, dist = 10E3) 
+    sim.add_channel(type = Channel.LENS, diam = 2 * beamWaist)
+    sim.add_channel(type = Channel.FREE_SPACE, dist = 5)
 
     channel_idx = 1
 
     sim.run()
 
-    waist_factor = np.arange(1,3, 0.01) 
-
-    inner_products = np.zeros(len(waist_factor))
-
-    for i in range(len(waist_factor)): 
-        sim.add_measurement_basis(ell=0, p=1, beam_waist = waist_factor[i]*beamWaist)
-        inner_products[i] = sim.compute_inner_product(0,0, channel_index_1 = channel_idx, use_measurement_basis_for_2 = True)
-        sim.delete_measurement_basis()
-
-    plt.plot(waist_factor, inner_products)
-    plt.xlabel("Waist Factor")
-    plt.ylabel("Inner Product")
-    plt.show()
-
     #sim.plot_detection_matrix(channel_idx, use_measurement_basis = True)
-    #sim.plot_beams(run_index = 2, channel_indices = [0,1])
-    #sim.plot_beams(plot_measurement_basis = True)
+    sim.plot_beams(run_index = 0, channel_indices=[0,2])
+    sim.plot_beams(plot_measurement_basis = True)
