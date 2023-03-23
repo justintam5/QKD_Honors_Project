@@ -706,7 +706,7 @@ if __name__ == "__main__":
     sim.add_measurement_basis(ell=0, p=3, beam_waist=1.7*beamWaist)
     sim.add_measurement_basis(ell=0, p=5, beam_waist=2*beamWaist)
 
-    # sim.add_channel(type=Channel.FREE_SPACE, dist=100)
+    sim.add_channel(type=Channel.FREE_SPACE, dist=100E3)
     sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.9, 0.9, 0.9]), app = 3*beamWaist)
     sim.add_channel(type = Channel.FREE_SPACE, dist = 10E3) 
     sim.add_channel(type = Channel.LENS, diam = 2 * beamWaist)
@@ -717,5 +717,22 @@ if __name__ == "__main__":
     sim.run()
 
     #sim.plot_detection_matrix(channel_idx, use_measurement_basis = True)
-    sim.plot_beams(run_index = 0, channel_indices=[0,2])
+    sim.plot_beams(run_index = 0, channel_indices=[0,1,3])
     sim.plot_beams(plot_measurement_basis = True)
+
+    # Observe affect of changing waist param of measurement basis
+    waist_factor = np.arange(1, 3, 0.01)
+
+    inner_products = np.zeros(len(waist_factor))
+
+    sim.delete_measurement_basis()
+
+    for i in range(len(waist_factor)):
+        sim.add_measurement_basis(ell=0, p=1, beam_waist=waist_factor[i]*beamWaist)
+        inner_products[i] = sim.compute_inner_product(0, 0, channel_index_1=channel_idx, use_measurement_basis_for_2=True)
+        sim.delete_measurement_basis()
+
+    plt.plot(waist_factor, inner_products)
+    plt.xlabel("Waist Factor")
+    plt.ylabel("Inner Product")
+    plt.show()
