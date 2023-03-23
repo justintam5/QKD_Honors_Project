@@ -470,9 +470,28 @@ class Simulation:
         self.num_runs = 0
 
     def delete_measurement_basis(self):
+        """
+        This function is used to delete all measurement basis data to avoid appending to previously added bases if necessary.
+        """
         self.measurement_basis = []
 
     def compute_detection_matrix(self, channel_index, run_indices=[], use_measurement_basis = False):
+        """
+        This function computes the detection matrix between the beams at a particular channel index and either the originally 
+        generated beams, or a seperately defined measurement basis. Note that the computed detection matrix is normalized for 
+        each row (i.e. the values are normalized so that the probabilities in each row add up to 1). 
+
+        @type channel_index: Integer 
+        @param channel_index: Index of channel for which the matrix is computed
+        @type run_indices: Array of integers
+        @param run_indices: Indices of runs (beams) for which matrix will be computed 
+        @type use_measurement_basis: Boolean 
+        @param use_measurement_basis: Indicator for using measurement basis to detect beams rather than the originally generated beams 
+
+        @rtype normalized_detection_matrix: Matrix of numbers values between 0 and 1
+        @return normalized_detection_matrix: Normalized detection matrix between specified measurement basis or originally generated beams, 
+        and beams at specified channel index 
+        """
 
         # If no run indices defined, compute for all runs 
         if run_indices == []: 
@@ -508,6 +527,18 @@ class Simulation:
         return normalized_detection_matrix
     
     def plot_detection_matrix(self, channel_index, run_indices = [], use_measurement_basis = False): 
+        """
+        This function plots the detection matrix between the beams at a particular channel index and either the originally 
+        generated beams, or a seperately defined measurement basis. Note that the displayed detection matrix is normalized for 
+        each row (i.e. the values are normalized so that the probabilities in each row add up to 1). 
+
+        @type channel_index: Integer 
+        @param channel_index: Index of channel for which the matrix is plotted
+        @type run_indices: Array of integers
+        @param run_indices: Indices of runs (beams) for which matrix will be plotted 
+        @type use_measurement_basis: Boolean 
+        @param use_measurement_basis: Indicator for using measurement basis to detect beams rather than the originally generated beams 
+        """
 
         if run_indices == []: 
             run_indices = range(self.num_runs)
@@ -528,6 +559,27 @@ class Simulation:
         plt.show()
 
     def compute_inner_product(self, index1, index2, use_measurement_basis_for_1=False, use_measurement_basis_for_2 = False, channel_index_1 = -1, channel_index_2 = -1):
+        """
+        This function computes the normalized inner product between two beams specified from the possible beams stored in the simulation class, 
+        including the beams generated, the beams transmitted through the different channels, and the measurement basis used for beam detection. 
+
+        @type index1: Integer greater than or equal to 0
+        @param index1: Index of first beam to be used for computation 
+        @type index2: Integer greater than or equal to 0
+        @param index2: Index of second beam to be used for computation 
+        @type use_measurement_basis_for_1: Boolean
+        @param use_measurement_basis_for_1: Indicator to use beam measurement basis for first index instead of generated or transmitted beams 
+        @type use_measurement_basis_for_2: Boolean
+        @param use_measurement_basis_for_2: Indicator to use beam measurement basis for second index instead of generated or transmitted beams 
+        @type channel_index_1: Integer greater than or equal to 0
+        @param channel_index_1: If measurement basis is not used for index1, this indicated the channel at which the first beam is taken 
+        @type channel_index_2: Integer greater than or equal to 0
+        @param channel_index_2: If measurement basis is not used for index2, this indicated the channel at which the second beam is taken 
+
+        @rtype: Number between 0 and 1
+        @return: Normalized inner product between the two specified beams 
+        """
+
         if use_measurement_basis_for_1:
             beam1 = self.measurement_basis[index1] 
         else: 
@@ -568,6 +620,17 @@ class Simulation:
         return(rho, phi)
     
     def __normalized_inner_product(beam1, beam2):
+        """
+        This function computes the normalized inner product between two beams that are given to it as an input. 
+        
+        @type beam1: Matrix of numbers
+        @param beam1: Values of the first beam in the xy plane 
+        @type beam2: Matrix of numbers
+        @param beam2: Values of the second beam in the xy plane 
+
+        @rtype normalized_inner_product: Number between 0 and 1 
+        @return normalized_inner_product: Inner product between the two given beams 
+        """
 
         # Get beam product 
         product = beam1 * np.conjugate(beam2)
@@ -598,7 +661,7 @@ if __name__ == "__main__":
 
     beamWaist = 2E-3 # Define beam waist of 2 mm 
 
-    sim = Simulation(L = 20 * beamWaist, N = 1500, wavelength = 810E-9)
+    sim = Simulation(L = 10 * beamWaist, N = 1000, wavelength = 810E-9)
     sim.add_beam_gen(ell = 0, p = 1, beam_waist = beamWaist)
     #sim.add_beam_gen(ell = 0, p = 3, beam_waist = beamWaist)
     #sim.add_beam_gen(ell = 0, p = 5, beam_waist = beamWaist)
@@ -607,7 +670,7 @@ if __name__ == "__main__":
     #sim.add_measurement_basis(ell=0, p=3, beam_waist=1.7*beamWaist)
     #sim.add_measurement_basis(ell=0, p=5, beam_waist=2*beamWaist)
 
-    sim.add_channel(type=Channel.FREE_SPACE, dist=300)
+    sim.add_channel(type=Channel.FREE_SPACE, dist=100)
     #sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.9, 0.9, 0.9]), app = 3*beamWaist)
     #sim.add_channel(type = Channel.FREE_SPACE, dist = 10) 
     #sim.add_channel(type = Channel.LENS, diam = 2 * beamWaist)
