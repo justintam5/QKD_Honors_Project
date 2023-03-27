@@ -180,7 +180,7 @@ class Simulation:
 
             # Iterate over all indices to generate the corresponding beam in the MUB and save to object
             for idx in range(num_measurement_beams):
-                self.measurement_basis.append(self.__get_mub_beam(idx, use_measurement_basis = True))
+                self.measurement_basis.append(self.__get_mub_beam(idx, use_measurement_basis = True, num_measurement_beams = num_measurement_beams))
                 self.measurement_labels.append("MUB " + str(idx))
 
         # Throw exception if invalid index was entered
@@ -570,6 +570,7 @@ class Simulation:
         This function is used to delete all measurement basis data to avoid appending to previously added bases if necessary.
         """
         self.measurement_basis = []
+        self.measurement_labels = []
 
     def compute_detection_matrix(self, channel_index, run_indices=[], use_measurement_basis = False, separate_mub = False):
         """
@@ -734,7 +735,8 @@ class Simulation:
             norm_factor = 1
 
         # Normalize trace and save value as QBER 
-        qber = trace/(self.num_beam_generators*norm_factor)
+        normalized_trace = trace/(self.num_beam_generators*norm_factor)
+        qber = 1 - normalized_trace
 
         return qber
     
@@ -806,7 +808,7 @@ class Simulation:
         # Return normalized inner prduct 
         return normalized_inner_product
 
-    def __get_mub_beam(self, index, use_measurement_basis = False):
+    def __get_mub_beam(self, index, use_measurement_basis = False, num_measurement_beams = 0):
         """
         This function computes a beam in the MUB of the current set of beam generators saved in the simulation using the given index. 
         
@@ -822,13 +824,17 @@ class Simulation:
 
         if use_measurement_basis: 
             # Compute sum of all measurement beams saved in simulation with their respective phase factors 
-            for idx in range(len(self.measurement_basis)): 
-                mub_beam = mub_beam + np.exp(2j * np.pi / len(self.measurement_basis) * idx * index) * self.measurement_basis[idx]
+            for idx in range(num_measurement_beams): 
+                mub_beam = mub_beam + np.exp(2j * np.pi / num_measurement_beams * idx * index) * self.measurement_basis[idx]
+            
+            mub_beam = mub_beam / np.sqrt(len(self.measurement_basis))
 
         else: 
             # Compute sum of all beams saved in simulation with their respective phase factors 
             for idx in range(self.num_beam_generators): 
                 mub_beam = mub_beam + np.exp(2j * np.pi / self.num_beam_generators * idx * index) * self.beam_generators[idx].beam
+            
+            mub_beam = mub_beam / np.sqrt(self.num_beam_generators)
 
         return mub_beam
 
@@ -846,39 +852,57 @@ if __name__ == "__main__":
     sim.add_beam_gen(ell = 2, p = 0, beam_waist = beamWaist)
     sim.add_beam_gen(ell = 3, p = 0, beam_waist = beamWaist)
 
+    sim.add_measurement_basis(ell = -3, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(ell = -2, p = 0, beam_waist = 2*beamWaist)
     sim.add_measurement_basis(ell = -1, p = 0, beam_waist = 2*beamWaist)
     sim.add_measurement_basis(ell = 0, p = 0, beam_waist = 2*beamWaist)
     sim.add_measurement_basis(ell = 1, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(ell = 2, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(ell = 3, p = 0, beam_waist = 2*beamWaist)
     sim.add_measurement_basis(generate_mub = True)
 
-    sim.add_channel(type=Channel.FREE_SPACE, dist=100E3)
+    sim.add_channel(type=Channel.FREE_SPACE, dist=1000E3) # Propagate for 1 km
     sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.9, 0.9, 0.9]), app = 3*beamWaist)
     sim.add_channel(type = Channel.FREE_SPACE, dist = 10E3) 
     sim.add_channel(type = Channel.LENS, diam = 2 * beamWaist)
     sim.add_channel(type = Channel.FREE_SPACE, dist = 5E3)
 
-    channel_idx = 3
+    channel_idx = 1
 
     sim.run(use_mub = True)
  
-    sim.plot_beams(channel_index=2)
-    sim.plot_detection_matrix(channel_idx, separate_mub = True)
+    #sim.plot_beams(channel_index=0)
+    #sim.plot_beams(channel_index=channel_idx)
+    #sim.plot_beams(plot_measurement_basis = True)
+    sim.plot_detection_matrix(channel_idx, separate_mub = True, use_measurement_basis = False)
+    sim.plot_detection_matrix(channel_idx, separate_mub = True, use_measurement_basis = True)
 
-    print("QBER: " + str(sim.compute_qber(channel_idx, separate_mub = True)))
+    #print("QBER: " + str(sim.compute_qber(channel_idx, use_measurement_basis = True, separate_mub = True)))
 
     # Observe affect of changing waist param of measurement basis
-    waist_factor = np.arange(1, 3, 0.01)
+    waist_factor = np.arange(1, 10, 0.5)
 
-    inner_products = np.zeros(len(waist_factor))
+    #inner_products = np.zeros(len(waist_factor))
+    qber = np.zeros(len(waist_factor))
 
     sim.delete_measurement_basis()
 
     for i in range(len(waist_factor)):
-        sim.add_measurement_basis(ell=0, p=1, beam_waist=waist_factor[i]*beamWaist)
-        inner_products[i] = sim.compute_inner_product(0, 0, channel_index_1=channel_idx, use_measurement_basis_for_2=True)
+        sim.add_measurement_basis(ell = -3, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = -2, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = -1, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = 0, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = 1, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = 2, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = 3, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(generate_mub = True)
+        #sim.add_measurement_basis(ell=-3, p=0, beam_waist=waist_factor[i]*beamWaist)
+        #inner_products[i] = sim.compute_inner_product(0, 0, channel_index_1=channel_idx, use_measurement_basis_for_2=True)
+        qber[i] = sim.compute_qber(channel_idx, use_measurement_basis = True, separate_mub = True)
+
         sim.delete_measurement_basis()
 
-    plt.plot(waist_factor, inner_products)
+    plt.plot(waist_factor, qber)
     plt.xlabel("Waist Factor")
-    plt.ylabel("Inner Product")
+    plt.ylabel("QBER")
     plt.show()
