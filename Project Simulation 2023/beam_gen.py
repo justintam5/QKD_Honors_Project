@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from scipy import special as sp
 
 class BeamGen:
-    PI = np.pi
-    def __init__(self, mode, ell, p, w0, r, phi, z, k, E0 = 1):
+    
+    def __init__(self, mode, ell, p, w0, r, phi, z, k, E0 = 1, pixel_spacing = 0, R=False):
         """
         Initialization Method:: Initializes both defined and callable attributes. Sets self.beam attribute uesd by intensity() and phase(). 
         Uses::      __create_lg_mode()
@@ -18,13 +18,17 @@ class BeamGen:
         self.p = p
         self.w0 = w0
         self.r = r
-        self.R = np.amax(self.r)/np.sqrt(2)
         self.phi = phi
         self.z = z
         self.k = k
         self.E0 = E0
         self.beam = None
+        self.pixel_spacing = pixel_spacing
         [self.x, self.y] = self.__polar_2_cart([self.r, self.phi])
+        if R: 
+            self.R = R
+        else:    
+            self.R = np.amax(self.r)/np.sqrt(2)
 
         if self.mode == "LG" or self.mode == "lg" : #Mode is chosen as LG 
             self.beam = self.__create_lg_mode()
