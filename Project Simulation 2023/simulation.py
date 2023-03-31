@@ -37,12 +37,15 @@ class Simulation:
         self.beam_generators = [] 
         self.measurement_basis = []
         self.measurement_labels = []
+        self.mub_basis = []
+        self.mub_labels = []
         self.num_channels = 0 
         self.num_beam_generators = 0
         self.runs = []
         self.beam_labels = []
         self.num_runs = 0
         self.units = units 
+        self.mub_used = False
 
         # Get unit multiplier 
         if units == "m": 
@@ -132,7 +135,7 @@ class Simulation:
         # Increase count of channels 
         self.num_beam_generators = self.num_beam_generators + 1
 
-    def add_measurement_basis(self, mode="LG", p=0, ell=0,  beam_waist=1.0, index=-1):
+    def add_measurement_basis(self, mode="LG", p=0, ell=0,  beam_waist=1.0, index=-1, generate_mub = False):
         """
         This function addes a beam generator of a specified mode and given parameter to the simulation. 
         This beam generator can then be selected when running a simulation, or compared with the rest of the 
@@ -159,17 +162,26 @@ class Simulation:
         r, phi = Simulation.__cart2pol(X, Y)
 
         # If index was not entered, append new beam generator to end of the array
-        if index == -1:
+        if (index == -1) and (not generate_mub):
             self.measurement_basis.append(BeamGen(mode, ell, p, beam_waist * self.multiplier, r, phi, z, wavevector).beam)
             if mode == "LG":
                 self.measurement_labels.append(
                     ("(p = " + str(p) + ", l = " + str(ell) + ")"))
 
         # If index was entered, ensure that it is within a valid range
-        elif index < self.num_beam_generators:
+        elif (index < self.num_beam_generators) and (not generate_mub):
             self.measurement_basis.insert(index, BeamGen(mode, ell, p, beam_waist * self.multiplier, r, phi, z, wavevector).beam)
             if mode == "LG":
                 self.measurement_labels.insert(index, ("(p = " + str(p) + ", l = " + str(ell) + ")"))
+
+        # If user selected to add MUB to measurement basis 
+        elif generate_mub:
+            num_measurement_beams = len(self.measurement_basis) # Number of beams currently in measurement basis 
+
+            # Iterate over all indices to generate the corresponding beam in the MUB and save to object
+            for idx in range(num_measurement_beams):
+                self.measurement_basis.append(self.__get_mub_beam(idx, use_measurement_basis = True, num_measurement_beams = num_measurement_beams))
+                self.measurement_labels.append("MUB " + str(idx))
 
         # Throw exception if invalid index was entered
         else:
@@ -213,7 +225,7 @@ class Simulation:
         # Increase count of channels 
         self.num_channels = self.num_channels + 1 
 
-    def run(self, beam_gen_indices = []): 
+    def run(self, beam_gen_indices = [], use_mub = False): 
         """
         This function is used to run the simulation and generate beam arrays for different runs and different channel input/outputs.
 
@@ -227,6 +239,16 @@ class Simulation:
                 beams = self.__run_per_beam_gen(beam_gen_index)
                 self.runs.append(beams)
                 self.num_runs = self.num_runs + 1
+            
+            if use_mub: 
+                self.mub_used = True
+                self.generate_mub_basis() # Generate MUB basis 
+
+                for mun_index in range(self.num_beam_generators):
+                    beams = self.__run_per_beam_gen(mun_index, use_mub = True)
+                    self.runs.append(beams)
+                    self.num_runs = self.num_runs + 1
+                    self.beam_labels.append(self.mub_labels[mun_index])
 
         # Runs for subset of beam generators 
         else:
@@ -235,7 +257,7 @@ class Simulation:
                 self.runs.append(beams)
                 self.num_runs = self.num_runs + 1
         
-    def __run_per_beam_gen(self, beam_gen_index): 
+    def __run_per_beam_gen(self, beam_gen_index, use_mub = False):
         """
         This function is used to run the simulation for a single beam generator and return the resultant array of beams for each channel input/ouput
 
@@ -255,7 +277,11 @@ class Simulation:
         beams = []
 
         # Store current beam as the initial beam and append to beams array 
-        current_beam = self.beam_generators[beam_gen_index].beam
+        if use_mub: # Use corresponding beam from MUB if MUB is used 
+            current_beam = self.mub_basis[beam_gen_index]
+        else: # Use beam generator beam if original basis is used 
+            current_beam = self.beam_generators[beam_gen_index].beam
+
         beams.append(current_beam)   
 
         # Loop through channels getting the output of each one and appending to the beams array 
@@ -266,7 +292,7 @@ class Simulation:
         # Return the array of beams computed 
         return beams 
     
-    def plot_beams(self, run_indices = [], channel_index = -1, channel_indices = [], run_index = -1, plot_measurement_basis = False): 
+    def plot_beams(self, run_indices = [], channel_index = -1, channel_indices = [], run_index = -1, plot_measurement_basis = False, plot_mub_basis = False): 
         """
         This function is used to plot the magnitude and phase of the beamfronts for different runs (i.e. different beam generators) 
         and for different points within the channels path (i.e. in between different channels).
@@ -490,6 +516,40 @@ class Simulation:
                 # Increment plot index
                 plot_idx = plot_idx + 1
 
+        elif plot_mub_basis:
+            # Initialize figure
+            figInit = plt.figure()
+
+            for beam_idx in range(len(self.mub_basis)):
+                # Get current beam
+                beam = self.mub_basis[beam_idx]
+
+                # Plot magnitude of current beam
+                ax_mag.append(figInit.add_subplot(len(self.mub_basis), 2, plot_idx))
+                plot_mag.append(ax_mag[beam_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.abs(beam)**2, cmap="inferno"))
+                ax_mag[beam_idx].set_aspect('equal')
+                ax_mag[beam_idx].autoscale(tight=True)
+
+                # Add labels to subplot 
+                ax_mag[beam_idx].set(xlabel = ("x [" + self.units + "]"), ylabel = ("y [" + self.units + "]"))
+                ax_mag[beam_idx].set_title(self.mub_labels[beam_idx] + " (Magnitude)")
+
+                # Increment plot index
+                plot_idx = plot_idx + 1
+
+                # Plot phase of current beam
+                ax_phase.append(figInit.add_subplot(len(self.mub_basis), 2, plot_idx))
+                plot_phase.append(ax_phase[beam_idx].pcolormesh(X/self.multiplier, Y/self.multiplier, np.mod(np.angle(beam), 2*np.pi),cmap="hsv", vmin=0, vmax=2*np.pi))
+                ax_phase[beam_idx].set_aspect('equal')
+                ax_phase[beam_idx].autoscale(tight=True)
+
+                # Add labels to subplot
+                ax_phase[beam_idx].set(xlabel=("x [" + self.units + "]"), ylabel=("y [" + self.units + "]"))
+                ax_phase[beam_idx].set_title(self.mub_labels[beam_idx] + " (Phase)")
+
+                # Increment plot index
+                plot_idx = plot_idx + 1
+
             # Display plot
             plt.show()
             
@@ -510,8 +570,9 @@ class Simulation:
         This function is used to delete all measurement basis data to avoid appending to previously added bases if necessary.
         """
         self.measurement_basis = []
+        self.measurement_labels = []
 
-    def compute_detection_matrix(self, channel_index, run_indices=[], use_measurement_basis = False):
+    def compute_detection_matrix(self, channel_index, run_indices=[], use_measurement_basis = False, separate_mub = False):
         """
         This function computes the detection matrix between the beams at a particular channel index and either the originally 
         generated beams, or a seperately defined measurement basis. Note that the computed detection matrix is normalized for 
@@ -555,14 +616,32 @@ class Simulation:
         # Normalize rows in detection matrix 
         normalized_detection_matrix = np.zeros([len(run_indices), len(run_indices)])
 
-        for row_idx in run_indices: # Sift through rows 
-            for col_idx in run_indices: # Sift through columns
-                normalized_detection_matrix[row_idx, col_idx] = detection_matrix[row_idx, col_idx] / (np.sum(detection_matrix[row_idx,:]))
+        if separate_mub:  # Normalize original basis and MUB separately
+            for row_section_idx in range(2): # Iterate through two row sections 
+                for col_section_idx in range(2): # Iterate through two column sections
+                    num_run_indices_per_section = int(len(run_indices)/2) # Initialize number of indices to sift through per each section (half of original matrix length)
+                    indices_idx = range(num_run_indices_per_section) # Generate indices to index the indices of each run within the section
+
+                    # Get lists of indices of the runs within the current section of the detection matrix 
+                    current_run_indices_row = [run_indices[indices_idx[i] + row_section_idx * num_run_indices_per_section] for i in range(num_run_indices_per_section)]
+                    current_run_indices_col = [run_indices[indices_idx[i] + col_section_idx * num_run_indices_per_section] for i in range(num_run_indices_per_section)]
+
+                    # Normalize each row in the current section of the detection matrix 
+                    for row_idx in current_run_indices_row:  # Sift through rows
+                        for col_idx in current_run_indices_col:  # Sift through columns
+                            normalized_detection_matrix[row_idx, col_idx] = detection_matrix[row_idx, col_idx] / (np.sum(detection_matrix[row_idx,current_run_indices_col]))
+        else:  # Normalize original basis and MUB together 
+            for row_idx in run_indices: # Sift through rows 
+                for col_idx in run_indices: # Sift through columns
+                    normalized_detection_matrix[row_idx, col_idx] = detection_matrix[row_idx, col_idx] / (np.sum(detection_matrix[row_idx,:]))
+
+        #if separate_mub: 
+        #    normalized_detection_matrix = normalized_detection_matrix * 2
 
         # Return normalized detection matrix 
         return normalized_detection_matrix
     
-    def plot_detection_matrix(self, channel_index, run_indices = [], use_measurement_basis = False): 
+    def plot_detection_matrix(self, channel_index, run_indices = [], use_measurement_basis = False, separate_mub = False): 
         """
         This function plots the detection matrix between the beams at a particular channel index and either the originally 
         generated beams, or a seperately defined measurement basis. Note that the displayed detection matrix is normalized for 
@@ -580,7 +659,8 @@ class Simulation:
             run_indices = range(self.num_runs)
 
         # Get detection matrix 
-        detection_matrix = self.compute_detection_matrix(channel_index, run_indices, use_measurement_basis = use_measurement_basis)
+        detection_matrix = self.compute_detection_matrix(channel_index, run_indices, use_measurement_basis = use_measurement_basis, separate_mub = separate_mub)
+        detection_matrix = detection_matrix * 100 # Convert detection matrix to hold values in %
 
         # Define classes 
         classes = [self.beam_labels[idx] for idx in run_indices] 
@@ -588,9 +668,15 @@ class Simulation:
         # Plot matrix
         figure, ax = plot_confusion_matrix(conf_mat = detection_matrix,
                                    class_names = classes,
-                                   show_absolute = False,
-                                   show_normed = True,
+                                   show_absolute = True,
+                                   show_normed = False,
                                    colorbar = True)
+
+        # Add title 
+        if separate_mub:
+            ax.set_title("Detection Matrix with MUB Normalized Separately (Values Shown as %)")
+        else:
+            ax.set_title("Detection Matrix (Values Shown as %)")
 
         plt.show()
 
@@ -633,6 +719,37 @@ class Simulation:
                 beam2 = self.runs[index2][channel_index_2]
 
         return Simulation.__normalized_inner_product(beam1, beam2)
+    
+    def compute_qber(self, channel_index, run_indices=[], use_measurement_basis = False, separate_mub = False): 
+
+        # Get detection matrix with original basis and MUB normalized separately 
+        detection_matrix = self.compute_detection_matrix(channel_index = channel_index, run_indices = run_indices, use_measurement_basis = use_measurement_basis, separate_mub = separate_mub)
+
+        # Compute trace of detection matrix 
+        trace = detection_matrix.diagonal().sum() 
+
+        # Set normalization factor 
+        if separate_mub: 
+            norm_factor = 2
+        else: 
+            norm_factor = 1
+
+        # Normalize trace and save value as QBER 
+        normalized_trace = trace/(self.num_beam_generators*norm_factor)
+        qber = 1 - normalized_trace
+
+        return qber
+    
+    def generate_mub_basis(self): 
+        """
+        This function computes all the beams in the MUB of the current set of beam generators saved in the simulation, 
+        and saves them to the current simulation object as an mub_basis list. 
+        """
+
+        # Iterate over all indices to generate the corresponding beam in the MUB and save to object
+        for idx in range(self.num_beam_generators): 
+            self.mub_basis.append(self.__get_mub_beam(idx))
+            self.mub_labels.append("MUB " + str(idx))
 
 
     def __cart2pol(x, y):
@@ -691,6 +808,35 @@ class Simulation:
         # Return normalized inner prduct 
         return normalized_inner_product
 
+    def __get_mub_beam(self, index, use_measurement_basis = False, num_measurement_beams = 0):
+        """
+        This function computes a beam in the MUB of the current set of beam generators saved in the simulation using the given index. 
+        
+        @type beam1: Integer 
+        @param beam1: Index of beam in MUB basis to generate 
+
+        @rtype mub_beam: 2d array 
+        @return mub_beam: Beam from MUB to current set of beam generators saved in the simulation with appropriate index
+        """
+
+        # Initialize MUB beam of given index to be computed 
+        mub_beam = np.zeros([self.NX, self.NY])
+
+        if use_measurement_basis: 
+            # Compute sum of all measurement beams saved in simulation with their respective phase factors 
+            for idx in range(num_measurement_beams): 
+                mub_beam = mub_beam + np.exp(2j * np.pi / num_measurement_beams * idx * index) * self.measurement_basis[idx]
+            
+            mub_beam = mub_beam / np.sqrt(len(self.measurement_basis))
+
+        else: 
+            # Compute sum of all beams saved in simulation with their respective phase factors 
+            for idx in range(self.num_beam_generators): 
+                mub_beam = mub_beam + np.exp(2j * np.pi / self.num_beam_generators * idx * index) * self.beam_generators[idx].beam
+            
+            mub_beam = mub_beam / np.sqrt(self.num_beam_generators)
+
+        return mub_beam
 
 # Use case example 
 if __name__ == "__main__": 
@@ -698,41 +844,65 @@ if __name__ == "__main__":
     beamWaist = 2 # Define beam waist of 2 mm 
 
     sim = Simulation(L = 10 * beamWaist, N = 1000, wavelength = 810E-6, units = "mm")
-    sim.add_beam_gen(ell = 0, p = 1, beam_waist = beamWaist)
-    sim.add_beam_gen(ell = 0, p = 3, beam_waist = beamWaist)
-    sim.add_beam_gen(ell = 0, p = 5, beam_waist = beamWaist)
+    sim.add_beam_gen(ell = -3, p = 0, beam_waist = beamWaist)
+    sim.add_beam_gen(ell = -2, p = 0, beam_waist = beamWaist)
+    sim.add_beam_gen(ell = -1, p = 0, beam_waist = beamWaist)
+    sim.add_beam_gen(ell = 0, p = 0, beam_waist = beamWaist)
+    sim.add_beam_gen(ell = 1, p = 0, beam_waist = beamWaist)
+    sim.add_beam_gen(ell = 2, p = 0, beam_waist = beamWaist)
+    sim.add_beam_gen(ell = 3, p = 0, beam_waist = beamWaist)
 
-    sim.add_measurement_basis(ell = 0, p = 1, beam_waist = 1.7*beamWaist)
-    sim.add_measurement_basis(ell=0, p=3, beam_waist=1.7*beamWaist)
-    sim.add_measurement_basis(ell=0, p=5, beam_waist=2*beamWaist)
+    sim.add_measurement_basis(ell = -3, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(ell = -2, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(ell = -1, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(ell = 0, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(ell = 1, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(ell = 2, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(ell = 3, p = 0, beam_waist = 2*beamWaist)
+    sim.add_measurement_basis(generate_mub = True)
 
-    sim.add_channel(type=Channel.FREE_SPACE, dist=100E3)
+    sim.add_channel(type=Channel.FREE_SPACE, dist=1000E3) # Propagate for 1 km
     sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.9, 0.9, 0.9]), app = 3*beamWaist)
     sim.add_channel(type = Channel.FREE_SPACE, dist = 10E3) 
     sim.add_channel(type = Channel.LENS, diam = 2 * beamWaist)
-    sim.add_channel(type = Channel.FREE_SPACE, dist = 5)
+    sim.add_channel(type = Channel.FREE_SPACE, dist = 5E3)
 
     channel_idx = 1
 
-    sim.run()
+    sim.run(use_mub = True)
+ 
+    #sim.plot_beams(channel_index=0)
+    #sim.plot_beams(channel_index=channel_idx)
+    #sim.plot_beams(plot_measurement_basis = True)
+    sim.plot_detection_matrix(channel_idx, separate_mub = True, use_measurement_basis = False)
+    sim.plot_detection_matrix(channel_idx, separate_mub = True, use_measurement_basis = True)
 
-    #sim.plot_detection_matrix(channel_idx, use_measurement_basis = True)
-    sim.plot_beams(run_index = 0, channel_indices=[0,1,3])
-    sim.plot_beams(plot_measurement_basis = True)
+    #print("QBER: " + str(sim.compute_qber(channel_idx, use_measurement_basis = True, separate_mub = True)))
 
     # Observe affect of changing waist param of measurement basis
-    waist_factor = np.arange(1, 3, 0.01)
+    waist_factor = np.arange(1, 10, 0.5)
 
-    inner_products = np.zeros(len(waist_factor))
+    #inner_products = np.zeros(len(waist_factor))
+    qber = np.zeros(len(waist_factor))
 
     sim.delete_measurement_basis()
 
     for i in range(len(waist_factor)):
-        sim.add_measurement_basis(ell=0, p=1, beam_waist=waist_factor[i]*beamWaist)
-        inner_products[i] = sim.compute_inner_product(0, 0, channel_index_1=channel_idx, use_measurement_basis_for_2=True)
+        sim.add_measurement_basis(ell = -3, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = -2, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = -1, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = 0, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = 1, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = 2, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(ell = 3, p = 0, beam_waist = waist_factor[i]*beamWaist)
+        sim.add_measurement_basis(generate_mub = True)
+        #sim.add_measurement_basis(ell=-3, p=0, beam_waist=waist_factor[i]*beamWaist)
+        #inner_products[i] = sim.compute_inner_product(0, 0, channel_index_1=channel_idx, use_measurement_basis_for_2=True)
+        qber[i] = sim.compute_qber(channel_idx, use_measurement_basis = True, separate_mub = True)
+
         sim.delete_measurement_basis()
 
-    plt.plot(waist_factor, inner_products)
+    plt.plot(waist_factor, qber)
     plt.xlabel("Waist Factor")
-    plt.ylabel("Inner Product")
+    plt.ylabel("QBER")
     plt.show()
