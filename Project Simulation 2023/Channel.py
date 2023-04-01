@@ -40,7 +40,7 @@ class Channel:
                 self.n = n 
                 self.m = m 
                 self.app = app 
-                if all(stre > 0) and all(stre < 1):
+                if all(stre >= 0) and all(stre <= 1):
                     self.stre = stre 
                 else: # Ensure that the strengths of all the abberations are between 0 and 1
                     raise Exception("Strength of all abberations must be between 0 and 1. ")
@@ -202,8 +202,8 @@ class Channel:
         """
 
         # Ensure indices are reasonable 
-        if (n < 0) or (m < 0) or (n < m): 
-            raise Exception("Incorrect indices for Zernike polynomials: Must have n >= m >= 0")
+        if (n < 0) or (n < m): 
+            raise Exception("Incorrect indices for Zernike polynomials: Must have n >= 0 and n >= m")
 
         ZR=np.zeros(RHO.shape); 
         rn = Channel.__RR(np.abs(m), n)
