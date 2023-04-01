@@ -5,7 +5,7 @@ from scipy import special as sp
 
 class BeamGen:
     
-    def __init__(self, mode, ell, p, w0, r, phi, z, k, E0 = 1, pixel_spacing = 0, R=False, s=False):
+    def __init__(self, mode, ell, p, w0, r, phi, z, k, E0 = 1, pixel_spacing = 0, R=-1, s=-1):
         """
         Initialization Method:: Initializes both defined and callable attributes. Sets self.beam attribute uesd by intensity() and phase(). 
         Uses::      __create_lg_mode()
@@ -13,7 +13,7 @@ class BeamGen:
         Used By::   None
         """
         self.error_marg = 1 / 100 #Units percent beam waist - Percentage error margin for each pixel to be within the apperature radius. 
-        self.s = s + 1 # specify the 'pixel mode'. value from 0 -> dim - 1. Default = False will plot every pixel mode. The '+ 1' is for an easier if statement. It con safely be ignored, as it will be subtracted by 1 before indexing.
+        self.s = s
         self.mode = mode
         self.ell = ell
         self.p = p
@@ -54,7 +54,7 @@ class BeamGen:
         Used By::       
         Ret Val::       phase of self.beam as an numpy array of dytype float64
         """
-        return (np.mod(np.angle(self.beam),2*np.PI))
+        return (np.mod(np.angle(self.beam),2*np.pi))
     
     def __create_lg_mode(self):
         """
@@ -89,7 +89,7 @@ class BeamGen:
         Used By::       __init__
         """
         u1 = np.array(self.__polar_2_cart([2*self.w0+self.pixel_spacing, 0]))
-        u2 = np.array(self.__polar_2_cart([2*self.w0+self.pixel_spacing, np.PI/3]))
+        u2 = np.array(self.__polar_2_cart([2*self.w0+self.pixel_spacing, np.pi/3]))
         i = 100 #define the absolute limit of linear parameters to run through each circle
         ui = np.empty([(2*i+1)**2, 2]) #defines an empty array that will be filled with the coordinates for pixel origin points (all vectors that are a lin. comb. of basis vectors)
         
@@ -105,10 +105,10 @@ class BeamGen:
         circle_i = np.apply_along_axis(self.__for_each_pixel, 1, ui) # For each pixel, call the __for_each_pixel funciton
         
         # Handle the case where s != 0. If s != 0 we instead only set pixel_img to 1 of the circles, and do not sum them.
-        if not self.s:
+        if self.s < 0:
             pixel_img = np.sum(circle_i, axis=0) # flatten our list of arrays into the same array (add each img on top of each other)
-        elif self.s:
-            pixel_img = circle_i[self.s-1]
+        elif self.s >=0:
+            pixel_img = circle_i[self.s]
 
         max_gauss_val = np.max(pixel_img) # Obtain the max value before drawing the aperture radius. This will be used to normalize the circle later on.
         pixel_img = self.__draw_apperature_radius(pixel_img) # draw the apperature radius onto the img
@@ -192,8 +192,8 @@ class BeamGen:
         Ret Val::       An LxL numpy array of dtype complex128 containing the Gaussian function.
 
         """
-        wavelength = (2*np.PI)/self.k
-        zR = (PI*(self.w0**2))/(wavelength)
+        wavelength = (2*np.pi)/self.k
+        zR = (np.pi*(self.w0**2))/(wavelength)
         
         Rc = self.z*(1.0+((zR/self.z)**2))
         wZ = self.w0*np.sqrt(1.0+((self.z/zR)**2))
@@ -251,7 +251,7 @@ class BeamGen:
         x = cart_cord[:, 0]
         y = cart_cord[:, 1]
         r = np.sqrt((x)**2+(y)**2)
-        phi = np.mod(np.arctan2(y,x),2*np.PI)
+        phi = np.mod(np.arctan2(y,x),2*np.pi)
         return np.column_stack((r, phi))
 
 ###---------------------------------USE CASE EXAMPLE--------------------------------------
@@ -259,14 +259,14 @@ class BeamGen:
 if __name__ == "__main__":
     PI = np.pi
     wavelength = 810E-6
-    beamWaist = 1
+    beamWaist = 2
     wavevector = (2.0*PI)/wavelength
 
-    app_radius = 10
-    precision = 600
+    graph_radius = 10
+    precision = 400
 
-    x = np.linspace(-app_radius,app_radius,precision+1); ## Grid points along x
-    y = np.linspace(-app_radius,app_radius,precision+1) ## Grid points along y
+    x = np.linspace(-graph_radius,graph_radius,precision+1); ## Grid points along x
+    y = np.linspace(-graph_radius,graph_radius,precision+1) ## Grid points along y
     X,Y = np.meshgrid(x,y)
     r = np.sqrt(X**2+Y**2)
     phi = np.mod(np.arctan2(Y,X),2*PI)
@@ -274,12 +274,12 @@ if __name__ == "__main__":
     # plt.plot(X, Y, marker='.', color='k', linestyle='none')
     # plt.show()
 
-    lg_beam = BeamGen("pixel",4,0,beamWaist,r,phi,0.000001,wavevector, pixel_spacing=0.5, R=7, s=15)
+    lg_beam = BeamGen("pixel",0,0,beamWaist,r,phi,0.000001,wavevector, pixel_spacing=0.5, R=8, s=0)
     plt.figure(figsize=(7,7))
     plt.pcolormesh(X, Y, lg_beam.intensity(), cmap='Blues')
     plt.grid()
-    plt.xlim([-app_radius, app_radius])
-    plt.ylim([-app_radius, app_radius])
+    plt.xlim([-graph_radius, graph_radius])
+    plt.ylim([-graph_radius, graph_radius])
     plt.show()
 
     # figInit = plt.figure()
