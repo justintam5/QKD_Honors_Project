@@ -202,7 +202,7 @@ class Channel:
         """
 
         # Ensure indices are reasonable 
-        if (n < 0) or (n < m): 
+        if (n < 0) or (n < m) or (n < -m):
             raise Exception("Incorrect indices for Zernike polynomials: Must have n >= 0 and n >= m")
 
         ZR=np.zeros(RHO.shape); 
