@@ -872,7 +872,7 @@ if __name__ == "__main__":
 
     sim.run(use_mub=True)
 
-    channel_idx = 0
+    channel_idx = 3
     sim.plot_beams(channel_index=channel_idx)
     sim.plot_detection_matrix(channel_idx, separate_mub=True)
 

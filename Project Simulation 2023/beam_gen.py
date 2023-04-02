@@ -24,6 +24,7 @@ class BeamGen:
         self.k = k
         self.E0 = E0
         self.beam = None
+        self.dimension = None
         self.pixel_spacing = pixel_spacing
         [self.x, self.y] = self.__polar_2_cart([self.r, self.phi])
         if R: 
@@ -103,7 +104,7 @@ class BeamGen:
 
         # For each row (axis 1) in the array (for each pixel center) call the private method __for_each_pixel. Pass the array ui as an argument:
         circle_i = np.apply_along_axis(self.__for_each_pixel, 1, ui) # For each pixel, call the __for_each_pixel funciton
-        
+        self.dimension = np.shape(circle_i)[0]
         # Handle the case where s != 0. If s != 0 we instead only set pixel_img to 1 of the circles, and do not sum them.
         if self.s < 0:
             pixel_img = np.sum(circle_i, axis=0) # flatten our list of arrays into the same array (add each img on top of each other)
@@ -262,7 +263,7 @@ if __name__ == "__main__":
     beamWaist = 2
     wavevector = (2.0*PI)/wavelength
 
-    graph_radius = 10
+    graph_radius = 30
     precision = 400
 
     x = np.linspace(-graph_radius,graph_radius,precision+1); ## Grid points along x
@@ -274,7 +275,8 @@ if __name__ == "__main__":
     # plt.plot(X, Y, marker='.', color='k', linestyle='none')
     # plt.show()
 
-    lg_beam = BeamGen("pixel",0,0,beamWaist,r,phi,0.000001,wavevector, pixel_spacing=0.5, R=8, s=0)
+    lg_beam = BeamGen("pixel",0,0,beamWaist,r,phi,0.000001,wavevector, pixel_spacing=0.5, R=20)
+    print(lg_beam.dimension)
     plt.figure(figsize=(7,7))
     plt.pcolormesh(X, Y, lg_beam.intensity(), cmap='Blues')
     plt.grid()
