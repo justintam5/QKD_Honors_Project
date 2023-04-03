@@ -1,7 +1,7 @@
 # Test files
 test.jsx
 test.py
-data_collection_pixel_modes.ipynb
+data_collection_lg_modes.ipynb
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

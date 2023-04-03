@@ -851,31 +851,45 @@ class Simulation:
 
 # Use case example 
 if __name__ == "__main__": 
+    wavelength = 810E-6
+    PI = np.pi
+    wavevector = (2.0*PI)/wavelength
+
+    graph_radius = 30
+    precision = 400
+
+    x = np.linspace(-graph_radius,graph_radius,precision+1); ## Grid points along x
+    y = np.linspace(-graph_radius,graph_radius,precision+1) ## Grid points along y
+    X,Y = np.meshgrid(x,y)
+    r = np.sqrt(X**2+Y**2)
+    phi = np.mod(np.arctan2(Y,X),2*PI)
 
     beamWaist = 2  # Define beam waist of 2 mm
-    R = 8 #define radius of aperture to be 10 mm
+    R = 20 #define radius of aperture to be 20 mm
     pixel_spacing = 0.5
 
-    sim = Simulation(L=10*2, N=200, wavelength=810E-6, units="mm")
-    sim.add_beam_gen(mode="pixel", s=0, R=R, beam_waist=beamWaist, pixel_spacing=pixel_spacing)
-    sim.add_beam_gen(mode="pixel", s=1, R=R, beam_waist=beamWaist, pixel_spacing=pixel_spacing)
-    sim.add_beam_gen(mode="pixel", s=2, R=R, beam_waist=beamWaist, pixel_spacing=pixel_spacing)
-    sim.add_beam_gen(mode="pixel", s=3, R=R, beam_waist=beamWaist, pixel_spacing=pixel_spacing)
-    sim.add_beam_gen(mode="pixel", s=4, R=R, beam_waist=beamWaist, pixel_spacing=pixel_spacing)
-    sim.add_beam_gen(mode="pixel", s=5, R=R, beam_waist=beamWaist, pixel_spacing=pixel_spacing)
-    sim.add_beam_gen(mode="pixel", s=6, R=R, beam_waist=beamWaist, pixel_spacing=pixel_spacing)
+    sim = Simulation(L=30*2, N=200, wavelength=810E-6, units="mm")
+    dimension = BeamGen("pixel",0,0,beamWaist,r,phi,0.000001,wavevector, pixel_spacing=pixel_spacing, R=R).dimension
+
+    for i in range (dimension):
+        sim.add_beam_gen(mode="pixel", s=i, R=R, beam_waist=beamWaist, pixel_spacing=pixel_spacing)
 
 
     sim.add_channel(type=Channel.FREE_SPACE, dist=100E3)
-    sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.9, 0.9, 0.9]), app = 3*beamWaist)
-    sim.add_channel(type = Channel.FREE_SPACE, dist = 10E3) 
+    #sim.add_channel(type = Channel.ABBARATION, n = [3, 1, 4], m = [1, 1, 2], stre = np.array([0.9, 0.9, 0.9]), app = 3*beamWaist)
+    #sim.add_channel(type = Channel.FREE_SPACE, dist = 10E3) 
+
 
     sim.run(use_mub=True)
 
-    channel_idx = 3
-    sim.plot_beams(channel_index=channel_idx)
-    sim.plot_detection_matrix(channel_idx, separate_mub=True)
+    channel_idx = 0
+    print(sim.compute_qber(channel_index=channel_idx))
 
+    
+    sim.plot_beams(run_index=1, plot_mub_basis=True)
+
+
+#sim.plot_detection_matrix(channel_idx, separate_mub=True)
 
 
     # beamWaist = 2 # Define beam waist of 2 mm 

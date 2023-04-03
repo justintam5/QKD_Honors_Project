@@ -38,7 +38,6 @@ class BeamGen:
         if self.mode == "pixel" :
             self.beam = self.__create_pixel_mode()
 
-
     def intensity(self):
         """
         Public Method:: Returns the  intensity of the generated beam
@@ -260,10 +259,11 @@ class BeamGen:
 if __name__ == "__main__":
     PI = np.pi
     wavelength = 810E-6
-    beamWaist = 2
     wavevector = (2.0*PI)/wavelength
 
+    beamWaist = 6
     graph_radius = 30
+    R = 20
     precision = 400
 
     x = np.linspace(-graph_radius,graph_radius,precision+1); ## Grid points along x
@@ -275,7 +275,7 @@ if __name__ == "__main__":
     # plt.plot(X, Y, marker='.', color='k', linestyle='none')
     # plt.show()
 
-    lg_beam = BeamGen("pixel",0,0,beamWaist,r,phi,0.000001,wavevector, pixel_spacing=0.5, R=20)
+    lg_beam = BeamGen("pixel",0,0,beamWaist,r,phi,0.000001,wavevector, pixel_spacing=0, R=R,)
     print(lg_beam.dimension)
     plt.figure(figsize=(7,7))
     plt.pcolormesh(X, Y, lg_beam.intensity(), cmap='Blues')
